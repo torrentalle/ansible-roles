@@ -39,5 +39,4 @@
       )
     }}"
     state: absent
-    purge:      true
-    autoremove: true
+    purge: true

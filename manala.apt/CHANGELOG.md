@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Replace deprecated uses of "include"
 - Pass apt module packages list directly to the `name` option
 
+### Removed
+- Disable autoremove flag for absent packages (behaviour has changed between ansible 2.1 and 2.4)
+
 ## [1.0.17] - 2018-03-21
 ### Added
 - MongoDB 3.6 support
