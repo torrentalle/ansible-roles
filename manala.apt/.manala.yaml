@@ -1,0 +1,9 @@
+manala:
+  template: manala.ansible-role
+
+role:
+  name: manala.apt
+  distributions:
+    - debian.jessie
+    - debian.stretch
+    - raspbian.stretch

@@ -1,65 +1,35 @@
-.PHONY: sh update lint test
-
-##########
-# Manala #
-##########
-
-MANALA_MAKE_DIR := $(abspath $(patsubst %/Makefile,%,$(lastword $(MAKEFILE_LIST))))
-
 include \
-	$(MANALA_MAKE_DIR)/Makefile.manala \
-	$(MANALA_MAKE_DIR)/Makefile.docker \
-	$(MANALA_MAKE_DIR)/Makefile.host \
-	$(MANALA_MAKE_DIR)/Makefile.travis
+	.manala/make/make.manala.mk \
+	.manala/make/make.host.mk \
+	.manala/make/make.travis.mk
 
--include \
-	$(MANALA_CURRENT_DIR)/../.env \
-	$(MANALA_CURRENT_DIR)/.env
+#########
+# Build #
+#########
 
-MANALA_VERBOSE := $(if $(VERBOSE),$(VERBOSE),$(MANALA_VERBOSE))
+build.debian.jessie: .fail_if_host_not(local)
+	docker build \
+		--pull \
+		--tag manala/ansible-role:debian.jessie \
+		--file .manala/docker/Dockerfile.debian.jessie \
+		.manala/docker
+.PHONY: build.debian.jessie
 
-########
-# Role #
-########
+build.debian.stretch: .fail_if_host_not(local)
+	docker build \
+		--pull \
+		--tag manala/ansible-role:debian.stretch \
+		--file .manala/docker/Dockerfile.debian.stretch \
+		.manala/docker
+.PHONY: build.debian.stretch
 
-ROLE_DIR       := $(MANALA_CURRENT_DIR)
-ROLE_TESTS_DIR := $(ROLE_DIR)/tests
-
-################
-# Distribution #
-################
-
-DISTRIBUTION_ID      = $(call list_split_first,.,$(DISTRIBUTION))
-DISTRIBUTION_RELEASE = $(call list_split_last,.,$(DISTRIBUTION))
-
-##########
-# Docker #
-##########
-
-MANALA_DOCKER_IMAGE       = manala/test-ansible
-MANALA_DOCKER_IMAGE_TAG   = $(if $(ANSIBLE_VERSION),$(ANSIBLE_VERSION)-)$(DISTRIBUTION)
-MANALA_DOCKER_MOUNT_DIR   = $(if $(ROLE_MOUNT_DIR),$(ROLE_MOUNT_DIR),/srv/role)
-MANALA_DOCKER_HOST        = $(ROLE).$(DISTRIBUTION).test
-MANALA_DOCKER_RUN_OPTIONS = --privileged
-MANALA_DOCKER_VOLUMES     = \
-	$(ROLE_DIR):/etc/ansible/roles/$(ROLE) \
-	$(if $(CACHE_DIR), \
-		$(call if_in,$(DISTRIBUTION_ID),debian ubuntu, \
-			$(CACHE_DIR)/$(DISTRIBUTION_ID)/$(DISTRIBUTION_RELEASE)/apt/archives:/var/cache/apt/archives \
-			$(CACHE_DIR)/$(DISTRIBUTION_ID)/$(DISTRIBUTION_RELEASE)/apt/lists:/var/lib/apt/lists \
-		) \
-	)
-MANALA_DOCKER_ENV         = \
-	USER_ID=$(MANALA_USER_ID) \
-	GROUP_ID=$(MANALA_GROUP_ID) \
-	MANALA_HOST=test \
-	MANALA_VERBOSE=$(MANALA_VERBOSE) \
-	DISTRIBUTION=$(DISTRIBUTION) \
-	DISTRIBUTION_ID=$(DISTRIBUTION_ID) \
-	DISTRIBUTION_RELEASE=$(DISTRIBUTION_RELEASE) \
-	ANSIBLE_BECOME_FLAGS="$(call escape_spaces,-H -S -n -E)" \
-	ANSIBLE_RETRY_FILES_ENABLED=0 \
-	ANSIBLE_FORCE_COLOR=1
+build.raspbian.stretch: .fail_if_host_not(local)
+	docker build \
+		--pull \
+		--tag manala/ansible-role:raspbian.stretch \
+		--file .manala/docker/Dockerfile.raspbian.stretch \
+		.manala/docker
+.PHONY: build.raspbian.stretch
 
 ######
 # Sh #
@@ -70,71 +40,78 @@ MANALA_HELP += $(call if_host,local,$(SH_HELP)\n)
 SH_HELP = \
 	$(call help_section,Test host shell)
 
-sh: .fail_if_host_not(local)
-	$(call fail_if_not,$(DISTRIBUTION),DISTRIBUTION is empty or not set)
-	$(call if_in,$(DISTRIBUTION),$(ROLE_DISTRIBUTIONS), \
-		$(call docker_shell), \
-		$(call log_warning,Shell on \"$(DISTRIBUTION)\" is not supported) \
-	)
+SH_HELP += $(call help,sh.debian.jessie, Open shell on test host - Debian Jessie)
+sh.debian.jessie: .fail_if_host_not(local) build.debian.jessie
+	docker run \
+		--rm \
+		--tty --interactive \
+		--privileged \
+		--volume $(PWD):/srv/role \
+		--volume $(PWD):/etc/ansible/roles/manala.apt \
+		--workdir /srv/role \
+		--hostname manala.apt.debian.jessie \
+		--env USER_ID=$(MANALA_USER_ID) \
+		--env GROUP_ID=$(MANALA_GROUP_ID) \
+		--env MANALA_HOST=test \
+		--env MANALA_VERBOSE=$(MANALA_VERBOSE) \
+		--env DISTRIBUTION=debian.jessie \
+		--env DISTRIBUTION_ID=debian \
+		--env DISTRIBUTION_RELEASE=jessie \
+		--env ANSIBLE_BECOME_FLAGS='-H -S -n -E' \
+		--env ANSIBLE_RETRY_FILES_ENABLED=0 \
+		--env ANSIBLE_FORCE_COLOR=1 \
+		manala/ansible-role:debian.jessie
+.PHONY: sh.debian.jessie
 
-SH_HELP += $(call if_in,debian.wheezy,$(ROLE_DISTRIBUTIONS),$(call help,sh.debian.wheezy, Open shell on test host - Debian Wheezy))
-sh.debian.wheezy: DISTRIBUTION = debian.wheezy
-sh.debian.wheezy: sh
+SH_HELP += $(call help,sh.debian.stretch, Open shell on test host - Debian Stretch)
+sh.debian.stretch: .fail_if_host_not(local) build.debian.stretch
+	docker run \
+		--rm \
+		--tty --interactive \
+		--privileged \
+		--volume $(PWD):/srv/role \
+		--volume $(PWD):/etc/ansible/roles/manala.apt \
+		--workdir /srv/role \
+		--hostname manala.apt.debian.stretch \
+		--env USER_ID=$(MANALA_USER_ID) \
+		--env GROUP_ID=$(MANALA_GROUP_ID) \
+		--env MANALA_HOST=test \
+		--env MANALA_VERBOSE=$(MANALA_VERBOSE) \
+		--env DISTRIBUTION=debian.stretch \
+		--env DISTRIBUTION_ID=debian \
+		--env DISTRIBUTION_RELEASE=stretch \
+		--env ANSIBLE_BECOME_FLAGS='-H -S -n -E' \
+		--env ANSIBLE_RETRY_FILES_ENABLED=0 \
+		--env ANSIBLE_FORCE_COLOR=1 \
+		manala/ansible-role:debian.stretch
+.PHONY: sh.debian.stretch
 
-SH_HELP += $(call if_in,debian.jessie,$(ROLE_DISTRIBUTIONS),$(call help,sh.debian.jessie, Open shell on test host - Debian Jessie))
-sh.debian.jessie: DISTRIBUTION = debian.jessie
-sh.debian.jessie: sh
+SH_HELP += $(call help,sh.raspbian.stretch, Open shell on test host - Raspbian Stretch)
+sh.raspbian.stretch: .fail_if_host_not(local) build.raspbian.stretch
+	docker run \
+		--rm \
+		--tty --interactive \
+		--privileged \
+		--volume $(PWD):/srv/role \
+		--volume $(PWD):/etc/ansible/roles/manala.apt \
+		--workdir /srv/role \
+		--hostname manala.apt.raspbian.stretch \
+		--env USER_ID=$(MANALA_USER_ID) \
+		--env GROUP_ID=$(MANALA_GROUP_ID) \
+		--env MANALA_HOST=test \
+		--env MANALA_VERBOSE=$(MANALA_VERBOSE) \
+		--env DISTRIBUTION=raspbian.stretch \
+		--env DISTRIBUTION_ID=raspbian \
+		--env DISTRIBUTION_RELEASE=stretch \
+		--env ANSIBLE_BECOME_FLAGS='-H -S -n -E' \
+		--env ANSIBLE_RETRY_FILES_ENABLED=0 \
+		--env ANSIBLE_FORCE_COLOR=1 \
+		manala/ansible-role:raspbian.stretch
+.PHONY: sh.raspbian.stretch
 
-SH_HELP += $(call if_in,debian.stretch,$(ROLE_DISTRIBUTIONS),$(call help,sh.debian.stretch,Open shell on test host - Debian Stretch))
-sh.debian.stretch: DISTRIBUTION = debian.stretch
-sh.debian.stretch: sh
-
-SH_HELP += $(call if_in,centos.7,$(ROLE_DISTRIBUTIONS),$(call help,sh.centos.7,      Open shell on test host - CentOS 7))
-sh.centos.7: DISTRIBUTION = centos.7
-sh.centos.7: sh
-
-SH_HELP += $(call if_in,ubuntu.xenial,$(ROLE_DISTRIBUTIONS),$(call help,sh.ubuntu.xenial, Open shell on test host - Ubuntu Xenial))
-sh.ubuntu.xenial: DISTRIBUTION = ubuntu.xenial
-sh.ubuntu.xenial: sh
-
-##########
-# Update #
-##########
-
-MANALA_HELP += $(call if_host,local,$(UPDATE_HELP)\n)
-
-UPDATE_HELP = \
-	$(call help_section,Test host update) \
-	$(call help,update,               Update test hosts across distributions)
-
-update: .fail_if_host_not(local)
-	$(call list_loop,DISTRIBUTION,$(if $(DISTRIBUTIONS),$(DISTRIBUTIONS),$(ROLE_DISTRIBUTIONS)), \
-		$$(call if_in,$$(DISTRIBUTION),$$(ROLE_DISTRIBUTIONS), \
-			$$(call log,Update \"$$(DISTRIBUTION)\") ; \
-				$$(call docker_pull), \
-			$$(call log_warning,Update \"$$(DISTRIBUTION)\" is not supported) \
-		) \
-	)
-
-UPDATE_HELP += $(call if_in,debian.wheezy,$(ROLE_DISTRIBUTIONS),$(call help,update.debian.wheezy, Update test host - Debian Wheezy))
-update.debian.wheezy: DISTRIBUTIONS = debian.wheezy
-update.debian.wheezy: update
-
-UPDATE_HELP += $(call if_in,debian.jessie,$(ROLE_DISTRIBUTIONS),$(call help,update.debian.jessie, Update test host - Debian Jessie))
-update.debian.jessie: DISTRIBUTIONS = debian.jessie
-update.debian.jessie: update
-
-UPDATE_HELP += $(call if_in,debian.stretch,$(ROLE_DISTRIBUTIONS),$(call help,update.debian.stretch,Update test host - Debian Stretch))
-update.debian.stretch: DISTRIBUTIONS = debian.stretch
-update.debian.stretch: update
-
-UPDATE_HELP += $(call if_in,centos.7,$(ROLE_DISTRIBUTIONS),$(call help,update.centos.7,      Update test host - CentOS 7))
-update.centos.7: DISTRIBUTIONS = centos.7
-update.centos.7: update
-
-UPDATE_HELP += $(call if_in,ubuntu.xenial,$(ROLE_DISTRIBUTIONS),$(call help,update.ubuntu.xenial, Update test host - Ubuntu Xenial))
-update.ubuntu.xenial: DISTRIBUTIONS = ubuntu.xenial
-update.ubuntu.xenial: update
+sh.%:
+	$(call log_warning,Shell on \"$(*)\" is not supported)
+.PHONY: sh
 
 ########
 # Lint #
