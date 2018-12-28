@@ -3,6 +3,10 @@ manala:
 
 role:
   name: manala.apt
+  description: Handle apt
+  tags:
+    - system
+    - apt
   distributions:
     - debian.jessie
     - debian.stretch
