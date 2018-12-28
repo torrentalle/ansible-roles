@@ -1,1 +1,1 @@
-{% include ansible_distribution|lower ~ '/default_src.j2' %}
+{% include ((ansible_lsb.id) if (ansible_lsb) else (ansible_distribution))|lower ~ '/default_src.j2' %}

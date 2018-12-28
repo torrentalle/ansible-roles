@@ -1,1 +1,1 @@
-{% include ansible_distribution|lower ~ '/security_updates.j2' %}
+{% include ((ansible_lsb.id) if (ansible_lsb) else (ansible_distribution))|lower ~ '/security_updates.j2' %}

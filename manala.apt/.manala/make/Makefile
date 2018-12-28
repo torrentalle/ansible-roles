@@ -89,6 +89,10 @@ SH_HELP += $(call if_in,debian.stretch,$(ROLE_DISTRIBUTIONS),$(call help,sh.debi
 sh.debian.stretch: DISTRIBUTION = debian.stretch
 sh.debian.stretch: sh
 
+SH_HELP += $(call if_in,raspbian.stretch,$(ROLE_DISTRIBUTIONS),$(call help,sh.raspbian.stretch, Open shell on test host - Raspbian Stretch))
+sh.raspbian.stretch: DISTRIBUTION = raspbian.stretch
+sh.raspbian.stretch: sh
+
 SH_HELP += $(call if_in,centos.7,$(ROLE_DISTRIBUTIONS),$(call help,sh.centos.7,      Open shell on test host - CentOS 7))
 sh.centos.7: DISTRIBUTION = centos.7
 sh.centos.7: sh
