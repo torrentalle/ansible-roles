@@ -1,0 +1,11 @@
+
+file:
+  /etc/apache2/apache2.conf:
+    exists: true
+    contains: 
+      - Timeout 299 # Check file content for these patterns
+    filetype: file
+file:
+  /etc/apache2/sites-available/nextcloud.conf:
+    exists: true
+    filetype: file

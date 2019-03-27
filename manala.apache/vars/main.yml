@@ -1,0 +1,4 @@
+---
+
+manala_apache_config_default:
+  Timeout: 299

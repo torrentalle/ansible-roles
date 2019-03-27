@@ -1,0 +1,6 @@
+---
+
+service:
+  apache2:
+    enabled: true
+    running: true

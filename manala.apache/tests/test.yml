@@ -1,0 +1,9 @@
+---
+- name: testouille
+  hosts: debian
+  become: true
+  vars:
+    manala_apache_config:
+      Timeout: 299
+  roles:
+    - manala.apache

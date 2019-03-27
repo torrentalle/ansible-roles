@@ -1,0 +1,24 @@
+---
+
+# Install
+manala_apache_install_packages: ~
+manala_apache_install_packages_default:
+  - apache2
+
+# Config
+manala_apache_config_file:     /etc/apache2/apache2.conf
+manala_apache_config_template: ~
+manala_apache_config:          []
+
+# Configs
+manala_apache_configs_exclusive: false
+manala_apache_configs_dir:       /etc/apache2/
+manala_apache_config_hostdir:  /etc/apache2/sites-available/
+manala_apache_configs_template:  ~
+manala_apache_configs:           []
+
+# User
+manala_apache_user: www-data
+
+# Logs
+manala_apache_log_dir: /var/log/apache2

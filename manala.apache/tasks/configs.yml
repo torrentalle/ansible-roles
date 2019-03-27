@@ -1,0 +1,109 @@
+---
+
+- name: "{{ name }} > Directory"
+  file:
+    path: "{{ manala_apache_configs_available_dir }}"
+    state: directory
+  when: manala_apache_configs|length
+
+- name: configs > Exclusive
+  find:
+    path: "{{ manala_apache_configs_available_dir }}"
+    patterns: "*.conf"
+  changed_when: false
+  register: __manala_apache_configs_exclusive_find
+  when: manala_apache_configs_exclusive
+
+- name: "{{ name }} > Templates"
+  template:
+    src:  "{{ item.template|default(manala_apache_configs_template|ternary(manala_apache_configs_template, name ~ '/empty.j2')) }}"
+    dest: "{{ item.file }}"
+  with_items: "{{ lookup(
+      'manala_apache_configs',
+      manala_apache_configs,
+      __manala_apache_configs_exclusive_find.files|default([]),
+      manala_apache_configs_available_dir,
+      wantlist=True,
+      wantstate='present'
+    )
+  }}"
+  when: item.content is not defined
+
+- name: "{{ name }} > Contents"
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ item.file }}"
+  with_items: "{{ lookup(
+      'manala_apache_configs',
+      manala_apache_configs,
+      __manala_apache_configs_exclusive_find.files|default([]),
+      manala_apache_configs_available_dir,
+      wantlist=True,
+      wantstate='present'
+    )
+  }}"
+  when: item.content is defined
+ 
+- name: "{{ name }} > Files absents"
+  file:
+    path:  "{{ item.file }}"
+    state: absent
+  with_items: "{{ lookup(
+      'manala_apache_configs',
+      manala_apache_configs,
+      __manala_apache_configs_exclusive_find.files|default([]),
+      manala_apache_configs_available_dir,
+      wantlist=True,
+      wantstate='absent'
+    )
+  }}"
+
+- name: "{{ name }} > Enabled directory"
+  file:
+    path: "{{ manala_apache_configs_enabled_dir }}"
+    state: directory
+  when: manala_apache_configs|length
+
+# - name: configs > Exclusive
+#   find:
+#     path: "{{ manala_apache_configs_enabled_dir }}"
+#     patterns: "*.conf"
+#   changed_when: false
+#   register: __manala_apache_configs_enabled_exclusive_find
+#   when: manala_apache_configs_exclusive
+
+- name: "{{ name }} > ln"
+  # debug:
+  #   #var: item
+  #   #msg: "{{ item.file }}" # fichier dans available
+  #   #msg: "{{ item.file|replace(manala_apache_configs_available_dir, manala_apache_configs_enabled_dir) }}" # fichier dans enabled
+  #   #msg: "{{ manala_apache_configs_available_dir|relpath(manala_apache_configs_enabled_dir) }}"
+  #   msg: "{{ item.file|replace(manala_apache_configs_available_dir, manala_apache_configs_available_dir|relpath(manala_apache_configs_enabled_dir)) }}"
+  file:
+    src: "{{ item.file|replace(manala_apache_configs_available_dir, manala_apache_configs_available_dir|relpath(manala_apache_configs_enabled_dir)) }}"
+    dest: "{{ item.file|replace(manala_apache_configs_available_dir, manala_apache_configs_enabled_dir) }}"
+    state: link
+  with_items: "{{ lookup(
+      'manala_apache_configs',
+      manala_apache_configs,
+      __manala_apache_configs_exclusive_find.files|default([]),
+      manala_apache_configs_available_dir,
+      wantlist=True,
+      wantstate='present'
+    )
+  }}"
+  when: item.enabled|default(True)
+
+# - name: ln > Files absents
+#   file:
+#     path:  "{{ item.file|replace(manala_apache_configs_available_dir, manala_apache_configs_enabled_dir) }}"
+#     state: absent
+#   with_items: "{{ lookup(
+#       'manala_apache_configs',
+#       manala_apache_configs,
+#       __manala_apache_configs_exclusive_find.files|default([]),
+#       manala_apache_configs_available_dir,
+#       wantlist=True
+#     )
+#   }}"
+#   when: (not item.enabled|default(True)) or (item.state == 'absent')

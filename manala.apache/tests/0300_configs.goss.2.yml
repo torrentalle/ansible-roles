@@ -1,0 +1,13 @@
+---
+
+file:
+  /etc/apache2/conf-enabled.test/foo.conf:
+    exists: true
+    filetype: symlink
+    linked-to: /etc/apache2/conf-available.test/foo.conf
+  /etc/apache2/conf-enabled.test/foo_template.conf:
+    exists: false
+  /etc/apache2/conf-enabled.test/bar.conf:
+    exists: false
+  /etc/apache2/conf-enabled.test/baz.conf:
+    exists: false

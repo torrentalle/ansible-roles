@@ -1,0 +1,7 @@
+---
+- name: config > replace
+  template:
+    src: "{{ manala_apache_config_template|ternary(manala_apache_config_template, 'default.j2') }}"
+    dest: "{{ manala_apache_config_file }}"
+
+

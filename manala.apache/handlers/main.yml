@@ -1,0 +1,12 @@
+---
+
+- name: apache restart
+  command: "/etc/init.d/apache2 restart"
+  changed_when: true
+  notify:
+    - do apache restart
+
+- name: do apache restart
+  service:
+    name:  apache
+    state: restarted
