@@ -12,10 +12,18 @@ manala_apache_config:          []
 
 # Configs
 manala_apache_configs_exclusive: false
-manala_apache_configs_dir:       /etc/apache2/
-manala_apache_config_hostdir:  /etc/apache2/sites-available/
+manala_apache_configs_available_dir: /etc/apache2/conf-available
+manala_apache_configs_enabled_dir: /etc/apache2/conf-enabled
 manala_apache_configs_template:  ~
 manala_apache_configs:           []
+
+# Sites
+manala_apache_sites_exclusive: false
+manala_apache_sites_available_dir: /etc/apache2/sites-available
+manala_apache_sites_enabled_dir: /etc/apache2/sites-enabled
+manala_apache_sites_template:  ~
+manala_apache_sites:           []
+
 
 # User
 manala_apache_user: www-data

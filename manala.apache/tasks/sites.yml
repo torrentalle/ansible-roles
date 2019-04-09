@@ -1,0 +1,112 @@
+---
+
+- name: 'sites > Directory'
+  file:
+    path: "{{ manala_apache_sites_available_dir }}"
+    state: directory
+  when: manala_apache_sites|length
+
+- name: 'sites > Exclusive'
+  find:
+    path: "{{ manala_apache_sites_available_dir }}"
+    patterns: "*.conf"
+  changed_when: false
+  register: __manala_apache_sites_exclusive_find
+  when: manala_apache_sites_exclusive
+
+- name: "sites > Templates"
+  template:
+    src:  "{{ item.template|default(manala_apache_sites_template|ternary(manala_apache_sites_template, 'sites/empty.j2')) }}"
+    dest: "{{ item.file }}"
+  with_items: "{{ lookup(
+      'manala_apache_sites',
+      manala_apache_sites,
+      __manala_apache_sites_exclusive_find.files|default([]),
+      manala_apache_sites_available_dir,
+      wantlist=True,
+      wantstate='present'
+    )
+  }}"
+  when: item.content is not defined
+
+- name: "sites > Contents"
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ item.file }}"
+  with_items: "{{ lookup(
+      'manala_apache_sites',
+      manala_apache_sites,
+      __manala_apache_sites_exclusive_find.files|default([]),
+      manala_apache_sites_available_dir,
+      wantlist=True,
+      wantstate='present'
+    )
+  }}"
+  when: item.content is defined
+ 
+- name: "sites > Files absents"
+  file:
+    path:  "{{ item.file }}"
+    state: absent
+  with_items: "{{ lookup(
+      'manala_apache_sites',
+      manala_apache_sites,
+      __manala_apache_sites_exclusive_find.files|default([]),
+      manala_apache_sites_available_dir,
+      wantlist=True,
+      wantstate='absent'
+    )
+  }}"
+  when: (not item.enabled|default(True)) or (item.state == 'absent')
+
+
+- name: "sites > Enabled directory"
+  file:
+    path: "{{ manala_apache_sites_enabled_dir }}"
+    state: directory
+  when: manala_apache_sites|length
+
+- name: 'sites > Exclusive'
+  find:
+    path: "{{ manala_apache_sites_enabled_dir }}"
+    patterns: "*.conf"
+  changed_when: false
+  register: __manala_apache_sites_enabled_exclusive_find
+  when: manala_apache_sites_exclusive
+
+- name: "sites > ln"
+  #debug:
+   #var: __manala_apache_sites_enabled_exclusive_find
+    #msg: "{{ item.file }}" # fichier dans available
+    #msg: "{{ item.file|replace(manala_apache_sites_available_dir, manala_apache_sites_enabled_dir) }}" # fichier dans enabled
+    #msg: "{{ manala_apache_sites_available_dir|relpath(manala_apache_sites_enabled_dir) }}"
+    #msg: "{{ item.file|replace(manala_apache_sites_available_dir, manala_apache_sites_available_dir|relpath(manala_apache_sites_enabled_dir)) }}"
+  file:
+    src: "{{ item.file|replace(manala_apache_sites_available_dir, manala_apache_sites_available_dir|relpath(manala_apache_sites_enabled_dir)) }}"
+    dest: "{{ item.file|replace(manala_apache_sites_available_dir, manala_apache_sites_enabled_dir) }}"
+    state: link
+  with_items: "{{ lookup(
+      'manala_apache_sites',
+      manala_apache_sites,
+      __manala_apache_sites_exclusive_find.files|default([]),
+      manala_apache_sites_available_dir,
+      wantlist=True,
+      wantstate='present'
+    )
+  }}"
+  when: item.enabled|default(True)
+
+- name: ln > Files absents
+  file:
+    path:  "{{ item.file }}"
+    state: absent
+  with_items: "{{ lookup(
+      'manala_apache_sites',
+      manala_apache_sites,
+      __manala_apache_sites_exclusive_find.files|default([]),
+      manala_apache_sites_available_dir,
+      wantlist=True,
+      wantstate='absent'
+    )
+  }}"
+  when: (not item.enabled|default(True)) or (item.state == 'absent')

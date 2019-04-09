@@ -1,0 +1,19 @@
+---
+
+file:
+  /etc/apache2/sites-available.test/foo.conf:
+    exists: true
+  /etc/apache2/sites-available.test/foo_template.conf:
+    exists: true
+    contains:
+      - <VirtualHost *:80>
+  /etc/apache2/sites-available.test/foo_content.conf:
+    exists: true
+    contains:
+      - TraceEnable Off
+      - Require all denied
+      - </DirectoryMatch>
+  /etc/apache2/sites-available.test/bar.conf:
+    exists: true
+  /etc/apache2/sites-available.test/baz.conf:
+    exists: false

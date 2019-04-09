@@ -1,24 +1,22 @@
 ---
 
-# Install
-- import_tasks: install.yml
-  tags:
-    - manala_apache
+# # Install
+# - import_tasks: install.yml
+#   tags:
+#     - manala_apache
 
-# Config
-- import_tasks: config.yml
-  tags:
-    - manala_apache
+# # Config
+# - import_tasks: config.yml
+#   tags:
+#     - manala_apache
 
 # Configs
-- import_tasks: config.yml
+- import_tasks: configs.yml
   tags:
     - manala_apache
 
 # Sites
-- import_tasks: config.yml
-  manala_apache_configs_available_dir: "{{ manala_apache_sites_available_dir }}"
-  manala_apache_configs_enabled_dir: "{{ manala_apache_sites_enabled_dir }}"
+- import_tasks: sites.yml
   tags:
     - manala_apache
 
